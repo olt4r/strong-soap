@@ -175,6 +175,24 @@ class XMLHandler {
         }
         return node;
       }
+      //val is a QName - need to map it properly
+      if (val != null && val instanceof QName) {
+        let mapping = nsContext.getPrefixMapping(val.nsURI);
+        if (mapping === null || mapping.declared === false) {
+          mapping = declareNamespace(nsContext, element, val.prefix, val.nsURI);
+        }
+        let prefix = mapping ? mapping.prefix : val.prefix;
+        let qval = prefix ? prefix + ':' + val.name : val.name;
+        element.text(qval);
+        // add attributes
+        if (attrs != null) {
+          this.addAttributes(element, nsContext, descriptor, val, attrs);
+        }
+        if (nameSpaceContextCreated) {
+          nsContext.popContext();
+        }
+        return node;
+      }
 
       this.mapObject(element, nsContext, descriptor, val, attrs);
       if (nameSpaceContextCreated) {
