@@ -4,6 +4,7 @@ var g = require('../../globalize');
 var WSDLElement = require('./wsdlElement');
 var descriptor = require('../xsd/descriptor');
 var ElementDescriptor = descriptor.ElementDescriptor;
+var AttributeDescriptor = descriptor.AttributeDescriptor;
 var TypeDescriptor = descriptor.TypeDescriptor;
 var QName = require('../qname');
 var helper = require('../helper');
@@ -173,7 +174,7 @@ class Operation extends WSDLElement {
               var elementDescriptor = part.element.describe(definitions);
               inputParts.addElement(elementDescriptor);
             }
-          } 
+          }
         }
         if (this.output && this.output.body) {
           for (let p in this.output.body.parts) {
@@ -316,8 +317,10 @@ class Operation extends WSDLElement {
           new ElementDescriptor(new QName(nsURI, 'Value', prefix), null, form, false));
         faultDescriptor.add(code, null, form, false);
         let reason = new ElementDescriptor(new QName(nsURI, 'Reason', prefix));
-        reason.add(
-          new ElementDescriptor(new QName(nsURI, 'Text', prefix), null, form, false));
+        let text = new ElementDescriptor(new QName(nsURI, 'Text', prefix), null, form, false);
+        text.add(
+          new AttributeDescriptor(new QName(helper.namespaces.xml, 'lang', 'xml'), null, form));
+        reason.add (text);
         faultDescriptor.add(reason, null, form, false);
         faultDescriptor.add(
           new ElementDescriptor(new QName(nsURI, 'Node', prefix), null, form, false));
@@ -390,4 +393,3 @@ Operation.allowedChildren = ['documentation', 'input', 'output', 'fault',
   'operation'];
 
 module.exports = Operation;
-
