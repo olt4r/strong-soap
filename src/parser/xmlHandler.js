@@ -161,30 +161,21 @@ class XMLHandler {
           }
         }
       }
-      //val is not an object - simple or date types
-      if (val != null && ( typeof val !== 'object' || val instanceof Date)) {
-        // for adding a field value nsContext.popContext() shouldnt be called
-        element.text(val);
+      // val is a qname, a date or a simple type
+      if (val != null && (val instanceof QName || val instanceof Date || typeof val !== 'object')) {
+        if (val instanceof QName) {
+          let mapping = nsContext.getPrefixMapping(val.nsURI);
+          if (mapping === null || mapping.declared === false) {
+            mapping = declareNamespace(nsContext, element, val.prefix, val.nsURI);
+          }
+          let prefix = mapping ? mapping.prefix : val.prefix;
+          let qval = prefix ? prefix + ':' + val.name : val.name;
+          element.text(qval);
+        } else {
+          element.text(val);
+        }
         //add $attributes. Attribute can be an attribute defined in XSD or an xsi:type.
         //e.g of xsi:type <name xmlns=".." xmlns:xsi="..." xmlns:ns="..." xsi:type="ns:string">some name</name>
-        if (attrs != null) {
-          this.addAttributes(element, nsContext, descriptor, val, attrs);
-        }
-        if (nameSpaceContextCreated) {
-          nsContext.popContext();
-        }
-        return node;
-      }
-      //val is a QName - need to map it properly
-      if (val != null && val instanceof QName) {
-        let mapping = nsContext.getPrefixMapping(val.nsURI);
-        if (mapping === null || mapping.declared === false) {
-          mapping = declareNamespace(nsContext, element, val.prefix, val.nsURI);
-        }
-        let prefix = mapping ? mapping.prefix : val.prefix;
-        let qval = prefix ? prefix + ':' + val.name : val.name;
-        element.text(qval);
-        // add attributes
         if (attrs != null) {
           this.addAttributes(element, nsContext, descriptor, val, attrs);
         }
