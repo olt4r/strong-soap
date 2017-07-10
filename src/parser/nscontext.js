@@ -275,27 +275,36 @@ class NamespaceContext {
    * @returns {Boolean} true if the declaration is created
    */
   declareNamespace(prefix, nsURI) {
-    var mapping = this.registerNamespace(prefix, nsURI);
-    if (!mapping) return null;
-    if (mapping.declared) {
+    // Find mapping registered for current scope or any ancestor
+    var registeredMapping = this.registerNamespace(prefix, nsURI);
+    if (!registeredMapping) {
       return null;
     }
-    mapping = this.currentScope.namespaces[mapping.prefix];
+    if (registeredMapping.declared) {
+      return null;
+    }
+    // Fetch registered mapping from current scope
+    var mapping = this.currentScope.namespaces[registeredMapping.prefix];
     if (mapping) {
+      // Mapping has been newly created on current scope by registerNamespace, mark it as declared.
+      // Children will refer to it from nested contexts but will not re-declare it themselves.
       mapping.declared = true;
     } else {
+      // Mapping has been found on ancestor by registerNamespace and is not declared (i.e. read from WSDL).
+      // Do not change the original! This would cause elements that are not children of current context to
+      // ignore the mapping and generate invalid XML (without necessary xmlns declarations).
+      // Create a copy in current scope and mark the copy as declared. Children will refer to it from nested
+      // contexts but will not re-declare it. After current context is popped, subsequent elements will only
+      // see the undeclared original.
       mapping = {
-        prefix: mapping.prefix,
+        prefix: registeredMapping.prefix,
         uri: nsURI,
         declared: true
       };
-      this.currentScope.namespaces[mapping.prefix] = mapping;
+      this.currentScope.namespaces[registeredMapping.prefix] = mapping;
     }
     return mapping;
   };
 }
 
 module.exports = NamespaceContext;
-
-
-
